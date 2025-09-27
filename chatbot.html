@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Saathi — Safety Chatbot (SOS in Header)</title>
+
+<!-- Lottie for animated robot -->
+<script src="https://unpkg.com/@lottiefiles/lottie-player@1.5.7/dist/lottie-player.js"></script>
+
+<style>
+:root {
+  --blue: #1976d2;
+  --accent: #e53935;
+  --bg: #f4f7fb;
+  --card: #fff;
+}
+
+body {
+  font-family: Inter, Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  margin: 0;
+}
+
+.chatbot {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  width: 360px;
+  max-width: calc(100% - 40px);
+  background: var(--card);
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(12, 20, 40, 0.15);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  z-index: 9999;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  background: linear-gradient(90deg, var(--blue), #0d6efd);
+  color: #fff;
+  position: relative;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.robot {
+  width: 46px;
+  height: 46px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.title {
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.sub {
+  font-size: 12px;
+  opacity: 0.95;
+}
+
+/* SOS Button in Header */
+.sos-header {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(229, 57, 53, 0.24);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  height: 520px;
+  padding: 12px;
+  background: linear-gradient(#fbfdff, #fff);
+}
+
+.messages {
+  flex: 1;
+  overflow: auto;
+  padding-right: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.msg {
+  max-width: 78%;
+  padding: 10px 12px;
+  border-radius: 14px;
+  line-height: 1.35;
+}
+
+.bot {
+  background: #eef6ff;
+  color: #06223f;
+  align-self: flex-start;
+}
+
+.user {
+  background: var(--blue);
+  color: #fff;
+  align-self: flex-end;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid #e6eefc;
+  border-radius: 12px;
+  padding: 10px;
+  align-self: flex-start;
+  box-shadow: 0 8px 20px rgba(13, 46, 101, 0.03);
+}
+
+.option-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.option-btn {
+  flex: 1 0 calc(50% - 8px);
+  min-width: 130px;
+  background: var(--blue);
+  color: #fff;
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.option-small {
+  background: #fff;
+  color: var(--blue);
+  border: 1px solid #dbe9ff;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.footer {
+  display: flex;
+  gap: 8px;
+  padding: 10px;
+  border-top: 1px solid #eef4ff;
+  background: #fff;
+}
+
+.input {
+  flex: 1;
+  padding: 10px;
+  border-radius: 999px;
+  border: 1px solid #e6eef8;
+}
+
+.send {
+  background: var(--blue);
+  border: none;
+  color: #fff;
+  padding: 10px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.mic {
+  background: #fff;
+  border: 1px solid #dbe9ff;
+  padding: 8px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.hint {
+  font-size: 12px;
+  color: #556;
+  margin-top: 8px;
+  text-align: center;
+}
+
+.small-note {
+  font-size: 12px;
+  color: #556;
+  margin-top: 6px;
+}
+
+@media (max-width: 420px) {
+  .chatbot {
+    width: 94%;
+    right: 3%;
+    bottom: 16px;
+  }
+
+  .option-btn {
+    flex-basis: 100%;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="chatbot" id="saathi">
+  <div class="header">
+    <div class="header-left">
+      <div class="robot">
+        <lottie-player src="https://assets2.lottiefiles.com/packages/lf20_x62chJ.json" background="transparent" speed="1" style="width:46px;height:46px" loop autoplay></lottie-player>
+      </div>
+      <div>
+        <div class="title">Saathi — Your Safety Guide</div>
+        <div class="sub">Text & voice — English / हिन्दी</div>
+      </div>
+    </div>
+    <button class="sos-header" id="sosBtn" title="Send SOS">SOS</button>
+  </div>
+
+  <div class="body">
+    <div class="messages" id="messages"></div>
+
+    <div class="footer">
+      <input id="textInput" class="input" placeholder="Type or speak... (press Enter)"/>
+      <button id="micBtn" class="mic" title="Start/Stop voice">🎙️</button>
+      <button id="sendBtn" class="send" title="Send message">➤</button>
+    </div>
+    <div class="small-note" id="tip">Tip: try "I think someone is following me" or "nearest metro station"</div>
+  </div>
+</div>
+
+<script>
+// CONFIG
+let touristLocation = { lat: 28.6195, lng: 77.2200 };
+let emergencyContact = { name: "Ranu", phone: "+911234567890" };
+
+// DOM Elements
+const messages = document.getElementById('messages');
+const textInput = document.getElementById('textInput');
+const sendBtn = document.getElementById('sendBtn');
+const micBtn = document.getElementById('micBtn');
+const sosBtn = document.getElementById('sosBtn');
+
+// Message Functions
+function appendUser(text) {
+  const d = document.createElement('div');
+  d.className = 'msg user';
+  d.innerText = text;
+  messages.appendChild(d);
+  messages.scrollTop = messages.scrollHeight;
+}
+function appendBot(text, speakNow = true) {
+  const d = document.createElement('div');
+  d.className = 'msg bot';
+  d.innerText = text;
+  messages.appendChild(d);
+  messages.scrollTop = messages.scrollHeight;
+  if (speakNow) speak(text);
+}
+function appendCard(html) {
+  const c = document.createElement('div');
+  c.className = 'card';
+  c.innerHTML = html;
+  messages.appendChild(c);
+  messages.scrollTop = messages.scrollHeight;
+}
+function containsDevanagari(s) { return /[\u0900-\u097F]/.test(s); }
+function speak(text) {
+  if (!('speechSynthesis' in window)) return;
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = containsDevanagari(text) ? 'hi-IN' : 'en-IN';
+  const voices = speechSynthesis.getVoices();
+  for (const v of voices) {
+    if (v.lang && v.lang.startsWith(u.lang.split('-')[0])) {
+      u.voice = v;
+      break;
+    }
+  }
+  speechSynthesis.cancel();
+  speechSynthesis.speak(u);
+}
+
+const intentPatterns = {
+  distress: [/\bsomeone is following\b/i, /following me/i, /i am scared/i, /\bi need help\b/i, /help me/i, /\bin danger\b/i, /\bखतरे\b/i, /\bडर\b/i, /\bमदद\b/i],
+  metro: [/\bnearest metro\b/i, /\bmetro station\b/i, /\bnearest station\b/i, /मेट्रो|स्टेशन/i],
+  police: [/\bpolice station\b/i, /\bnearest police\b/i, /\bpolice\b/i, /पुलिस/i],
+  hospital: [/\bhospital\b/i, /\bnearest hospital\b/i, /अस्पताल/i],
+  contact: [/\b(emergency contact|my contact|call .*contact|call ranu|call my contact)\b/i, /आपात संपर्क/i],
+  cab: [/\b(book cab|book a cab|cab|taxi|ola|uber)\b/i, /कैब|टैक्सी/i],
+  hello: [/^\s*(hi|hello|hey|hii)\b/i],
+  howare: [/how are you|how r u|how are u/i],
+  thanks: [/thanks|thank you/i]
+};
+
+function detectIntents(text) {
+  const found = [];
+  for (const [k, arr] of Object.entries(intentPatterns)) {
+    for (const r of arr) {
+      if (r.test(text)) {
+        found.push(k);
+        break;
+      }
+    }
+  }
+  return found;
+}
+
+function openMaps(query) {
+  const url = `https://www.google.com/maps/search/${encodeURIComponent(query)}+near+${touristLocation.lat},${touristLocation.lng}`;
+  window.open(url, '_blank');
+}
+function openMetro() { openMaps('metro station'); appendBot("Opened nearest metro search in Maps."); }
+function openPolice() { openMaps('police station'); appendBot("Opened nearest police station in Maps."); }
+function openHospital() { openMaps('hospital'); appendBot("Opened nearest hospital in Maps."); }
+function callEmergency() { appendBot(`Calling ${escapeHtml(emergencyContact.name)}...`); setTimeout(() => window.location.href = `tel:${emergencyContact.phone}`, 500); }
+function smsEmergency() {
+  appendBot(`Opening SMS composer to ${escapeHtml(emergencyContact.name)}...`);
+  window.location.href = `sms:${emergencyContact.phone}?body=${encodeURIComponent("I need help. My location: https://www.google.com/maps/search/?api=1&query=" + touristLocation.lat + "," + touristLocation.lng)}`;
+}
+function showCabCard() {
+  const html = `
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="font-weight:700;margin-bottom:6px">Book a cab</div>
+      <div style="display:flex;gap:8px">
+        <button class="option-btn" onclick="openUrl('https://m.uber.com/ul/?action=setPickup&pickup=my_location')">🚕 Uber</button>
+        <button class="option-btn" onclick="openUrl('https://book.olacabs.com/?lat=${touristLocation.lat}&lng=${touristLocation.lng}')">🚖 Ola</button>
+      </div>
+    </div>`;
+  appendCard(html);
+}
+function openUrl(u) { window.open(u, '_blank'); appendBot("Opened the option in a new tab."); }
+
+function handleInput(raw) {
+  const text = (raw || '').trim();
+  if (!text) return;
+  appendUser(text);
+  const intents = detectIntents(text);
+  if (intents.includes('distress')) {
+    appendBot(containsDevanagari(text) ? "शांत रहें — मैं आपकी मदद करूँगा/करूँगी। नीचे तुरंत उपयोगी विकल्प दिए गए हैं।" : "Stay calm — I'm here with you. I will help. Quick actions are below.");
+    const html = `
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;gap:8px">
+          <button class="option-btn" onclick="openMetro()">🚇 Nearest Metro</button>
+          <button class="option-btn secondary" onclick="openPolice()">🚓 Police Station</button>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="option-btn" onclick="openHospital()">🏥 Hospital</button>
+          <button class="option-btn secondary" onclick="callEmergency()">📞 Call ${escapeHtml(emergencyContact.name)}</button>
+        </div>
+        <div style="display:flex;gap:8px;justify-content:center">
+          <button class="option-small" onclick="smsEmergency()">✉️ Message ${escapeHtml(emergencyContact.name)}</button>
+          <button class="option-small" onclick="showCabCard()">🚕 Book Cab</button>
+        </div>
+        <div class="small-note" style="text-align:center">Tap any action — it opens Maps or calls/SMS on your device.</div>
+      </div>`;
+    appendCard(html);
+    return;
+  }
+  if (intents.includes('metro')) { appendBot("Here’s the nearest metro station I can find:"); appendCard(`<div><button class="option-btn" onclick="openMetro()">🚇 Open Nearest Metro</button></div>`); return; }
+  if (intents.includes('police')) { appendBot("Opening nearby police stations:"); appendCard(`<div><button class="option-btn" onclick="openPolice()">🚓 Open Police Station</button></div>`); return; }
+  if (intents.includes('hospital')) { appendBot("Nearby hospitals — open Maps:"); appendCard(`<div><button class="option-btn" onclick="openHospital()">🏥 Open Hospital</button></div>`); return; }
+  if (intents.includes('contact')) {
+    appendBot(`Here is your emergency contact: ${escapeHtml(emergencyContact.name)}`);
+    appendCard(`
+      <div>
+        <div style="font-weight:700">${escapeHtml(emergencyContact.name)}</div>
+        <div style="color:#556;margin:6px 0">${escapeHtml(emergencyContact.phone)}</div>
+        <div style="display:flex;gap:8px">
+          <button class="option-small" onclick="callEmergency()">📞 Call</button>
+          <button class="option-small" onclick="smsEmergency()">✉️ SMS</button>
+        </div>
+      </div>`);
+    return;
+  }
+  if (intents.includes('cab')) { appendBot("I can help book a cab. Choose a provider:"); showCabCard(); return; }
+
+  const lc = text.toLowerCase();
+  if (/^(hi|hello|hey|hii)\b/.test(lc)) { appendBot("Hello! 👋 I'm Saathi, your safety buddy. How can I help?"); return; }
+  if (/how are you/i.test(lc)) { appendBot("I'm good 🤖 — always watching out for you. How are you?"); return; }
+  if (/thank|thanks/i.test(lc)) { appendBot("You're welcome 🙏 — stay safe."); return; }
+
+  const fallbacks = [
+    "I can help with safety: say 'someone is following me', 'nearest metro', 'call my emergency contact', or 'book cab'.",
+    "If you're unsure, tell me how you feel (e.g. 'I'm scared' or 'I think someone is following me').",
+    "Ask me to show nearby places (metro / police / hospital), or press SOS if it's urgent."
+  ];
+  appendBot(fallbacks[Math.floor(Math.random() * fallbacks.length)]);
+}
+
+sendBtn.addEventListener('click', () => { const v = textInput.value; textInput.value = ''; handleInput(v); });
+textInput.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); sendBtn.click(); } });
+
+let recognition = null, recognizing = false;
+if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SR();
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+  recognition.lang = 'en-IN';
+  recognition.onstart = () => { recognizing = true; micBtn.innerText = '🔴'; }
+  recognition.onend = () => { recognizing = false; micBtn.innerText = '🎙️'; }
+  recognition.onerror = (e) => { recognizing = false; micBtn.innerText = '🎙️'; }
+  recognition.onresult = (ev) => { const t = ev.results[0][0].transcript; textInput.value = t; handleInput(t); }
+}
+micBtn.addEventListener('click', () => {
+  if (!recognition) { alert('Speech recognition not supported'); return; }
+  if (recognizing) recognition.stop(); else recognition.start();
+});
+
+// SOS Button Click
+sosBtn.addEventListener('click', () => {
+  const ok = confirm("🚨 Confirm SOS? This will call your emergency contact immediately.");
+  if (!ok) { appendBot("SOS cancelled. If needed, you can press SOS anytime."); return; }
+  appendBot("🚨 SOS activated. Calling your emergency contact now...");
+  speak("SOS activated. Calling your emergency contact now.");
+  setTimeout(() => window.location.href = `tel:${emergencyContact.phone}`, 900);
+});
+
+function escapeHtml(t) {
+  const d = document.createElement('div');
+  d.innerText = t;
+  return d.innerHTML;
+}
+</script>
+
+</body>
+</html>
