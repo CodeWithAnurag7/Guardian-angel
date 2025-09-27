@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Movement Safety</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f5f5f5; }
+        h1 { text-align: center; padding: 20px; background: #4CAF50; color: white; margin: 0; }
+        #map { height: 500px; width: 90%; margin: 20px auto; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+        #alertBox { width: 90%; margin: 10px auto; padding: 15px; font-size: 18px; border-radius: 8px; text-align: center; }
+        .safe { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .danger { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        #prompt { width: 90%; margin: 10px auto; text-align: center; }
+        #prompt button { padding: 12px 20px; margin: 5px; font-size: 16px; cursor: pointer; border-radius: 5px; border: none; color: white; }
+        #prompt button.safeBtn { background-color: #28a745; }
+        #prompt button.dangerBtn { background-color: #dc3545; }
+    </style>
+</head>
+<body>
+
+<h1>My Movement Safety</h1>
+<div id="alertBox" class="safe">&#9989; Tourist is currently safe</div>
+<div id="map"></div>
+<div id="prompt"></div>
+
+<script>
+    // Initialize map
+    var map = L.map('map').setView([28.6110, 77.2100], 15);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 19}).addTo(map);
+
+    // Danger zones (red zones)
+    var dangerZones = [
+        {lat:28.6129, lng:77.2295, radius:400, reason:"Riot reported"},
+        {lat:28.6200, lng:77.2200, radius:300, reason:"Flooded area"}
+    ];
+
+    dangerZones.forEach(function(zone){
+        L.circle([zone.lat, zone.lng], {
+            color: 'red',
+            fillColor: 'red',
+            fillOpacity: 0.4,
+            radius: zone.radius
+        }).addTo(map).bindPopup("Danger: " + zone.reason);
+    });
+
+    // Tourist marker
+    var touristMarker = L.circle([28.6110,77.2100], {
+        color: 'green',
+        fillColor: 'green',
+        fillOpacity: 0.4,
+        radius: 500
+    }).addTo(map);
+
+    var alertBox = document.getElementById("alertBox");
+    var promptDiv = document.getElementById("prompt");
+
+    // Simulated tourist path
+    var path = [
+        [28.6110,77.2100],[28.6120,77.2120],[28.6130,77.2140],
+        [28.6140,77.2160],[28.6150,77.2180],[28.6165,77.2190],
+        [28.6180,77.2195],[28.6195,77.2200]
+    ];
+    var index = 0;
+    var inDanger = false;
+
+    function moveTourist(){
+        if(index >= path.length) return;
+        touristMarker.setLatLng(path[index]);
+
+        // Check if in any danger zone
+        inDanger = false;
+        var triggeredReasons = [];
+        dangerZones.forEach(function(zone){
+            var distance = map.distance(path[index], [zone.lat, zone.lng]);
+            if(distance <= 500 + zone.radius){
+                inDanger = true;
+                triggeredReasons.push(zone.reason);
+            }
+        });
+
+        if(inDanger){
+            touristMarker.setStyle({color:'red', fillColor:'red'});
+            alertBox.className = "danger";
+            alertBox.innerHTML = "&#9888; Tourist is in a danger zone! Reason: " + triggeredReasons.join(", ");
+        } else {
+            touristMarker.setStyle({color:'green', fillColor:'green'});
+            alertBox.className = "safe";
+            alertBox.innerHTML = "&#9989; Tourist is currently safe";
+        }
+
+        index++;
+        setTimeout(moveTourist, 1500);
+    }
+    moveTourist();
+
+    // Safety prompt function
+    function safetyPrompt(){
+        if(!inDanger) return; // Only trigger if in danger
+        promptDiv.innerHTML = `
+            <p style="font-size:18px;">Are you safe?</p>
+            <button class="safeBtn" onclick="safeClick()">Yes, I am safe</button>
+            <button class="dangerBtn" onclick="dangerClick()">No, I am in danger</button>
+        `;
+    }
+
+    function safeClick(){
+        alertBox.className = "safe";
+        alertBox.innerHTML = "&#9989; Tourist confirmed safe";
+        promptDiv.innerHTML = "";
+    }
+
+    function dangerClick(){
+        alertBox.className = "danger";
+        alertBox.innerHTML = "&#9888; Tourist is in danger! Help info displayed below";
+        promptDiv.innerHTML = `
+            <p>Nearest Police Station: <a href="https://www.google.com/maps/dir/?api=1&destination=28.6125,77.2250" target="_blank">Route</a>, Phone: 100</p>
+            <p>Nearest Hospital: <a href="https://www.google.com/maps/dir/?api=1&destination=28.6150,77.2180" target="_blank">Route</a>, Phone: 102</p>
+        `;
+    }
+
+    // Trigger prompt every 30 min (for demo every 15 sec)
+    setInterval(safetyPrompt, 15000);
+
+</script>
+
+</body>
+</html>
