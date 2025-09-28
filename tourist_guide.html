@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Incredible India Tourist Guide</title>
+    <style>
+        /* --- General Layout and Container Styles --- */
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; 
+            padding: 0; 
+            min-height: 100vh; 
+            position: relative; 
+            color: #333; 
+            background-image: url('https://k1travels.com/wp-content/uploads/2023/04/1440x810_cmsv2_6187d843-7037-5073-92f1-c3a894a93ba2-5368390.jpg'); 
+            background-size: cover; 
+            background-position: center center; 
+            background-attachment: fixed; 
+            background-repeat: no-repeat; 
+        }
+
+        /* Background Overlay */
+        body::before {
+            content: '';
+            position: fixed; 
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.6); 
+            z-index: -1; 
+        }
+
+        /* --- Container Styles --- */
+        .container { 
+            max-width: 900px; 
+            margin: 40px auto; 
+            background-color: white; 
+            padding: 30px; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); 
+            z-index: 1; 
+            position: relative; 
+        }
+        
+        /* --- ENHANCED HEADER STYLES --- */
+        h1 {
+            color: #1a5276; 
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            font-size: 2.2em; 
+            font-weight: 700; 
+            letter-spacing: 0.5px; 
+            position: relative; 
+        }
+        h1::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%); 
+            width: 100px; 
+            height: 4px;
+            background-color: #f1c40f; 
+            border-radius: 2px;
+        }
+
+        /* --- ENHANCED INPUT AND BUTTON STYLES --- */
+        .input-section { 
+            /* 4 columns layout: State, City, Guide Button, Search Button */
+            display: grid; 
+            grid-template-columns: repeat(4, 1fr); 
+            gap: 15px; 
+            margin-bottom: 40px; 
+            align-items: end; 
+            padding: 15px;
+            background-color: #e9ecef; 
+            border-radius: 8px;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .input-group { 
+            width: 100%;
+        }
+        
+        label { 
+            display: block; 
+            margin-bottom: 5px; 
+            font-weight: 600; 
+            color: #343a40; 
+            font-size: 0.95em;
+        }
+
+        select { 
+            width: 100%; 
+            padding: 10px 15px; 
+            border-radius: 6px; 
+            border: 2px solid #ced4da; 
+            font-size: 16px; 
+            box-sizing: border-box; 
+            background-color: #ffffff;
+            -webkit-appearance: none; 
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path fill="none" stroke="%23343a40" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m2 5 6 6 6-6"/></svg>');
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 14px;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        select:focus { 
+            border-color: #1a5276; 
+            box-shadow: 0 0 0 0.2rem rgba(26, 82, 118, 0.25); 
+            outline: none;
+        }
+
+        /* General Button Style */
+        .input-section button { 
+            padding: 12px 15px; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            border: none; 
+            font-weight: 700; 
+            transition: background-color 0.3s, transform 0.2s, box-shadow 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            height: 44px; /* Matches height of select field */
+        }
+
+        /* Style for the main search button */
+        #search-button {
+            background-color: #28a745; 
+            color: white; 
+        }
+        #search-button:hover { 
+            background-color: #1f8b38; 
+            box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3);
+        }
+
+        /* Style for the new guide button */
+        #guide-button {
+            background-color: #1a5276; 
+            color: white; 
+            font-size: 0.9em; /* Slightly smaller text for fit */
+            line-height: 1;
+        }
+        #guide-button:hover {
+            background-color: #15415a;
+            box-shadow: 0 4px 10px rgba(26, 82, 118, 0.3);
+        }
+        
+        /* Responsive adjustments for the 4-column layout */
+        @media (max-width: 768px) {
+            .input-section {
+                grid-template-columns: repeat(2, 1fr); /* 2 columns on tablets */
+            }
+        }
+        @media (max-width: 500px) {
+            .input-section {
+                grid-template-columns: 1fr; /* 1 column on mobile */
+            }
+        }
+        
+        /* --- Result Card and Loader Styles --- */
+        #results-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+        .place-card { background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); padding: 20px; border-top: 4px solid #1a5276; }
+        .place-card h3 { color: #1a5276; margin-top: 0; margin-bottom: 10px; font-size: 1.5em; }
+        .info-detail { margin-bottom: 8px; font-size: 0.95em; }
+        .info-detail strong { display: inline-block; min-width: 100px; color: #555; }
+        .history { margin-top: 15px; border-top: 1px solid #eee; padding-top: 10px; font-style: italic; color: #666; line-height: 1.4; }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #1a5276; border-radius: 50%; width: 40px; height: 40px; animation: spin 2s linear infinite; margin: 50px auto; display: none; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+
+        /* --- WELCOME MODAL STYLES (Kept for initial UX) --- */
+        #welcome-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9); 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000; 
+            opacity: 1;
+            transition: opacity 0.5s ease-in-out, visibility 0.5s;
+            visibility: visible;
+        }
+
+        #welcome-modal.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            padding: 40px 50px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 5px 25px rgba(255, 255, 255, 0.3);
+            max-width: 90%;
+            transform: scale(1);
+            transition: transform 0.5s ease;
+        }
+        
+        .modal-content h2 {
+            color: #1a5276; 
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .modal-content p {
+            color: #343a40;
+            font-size: 1.1em;
+            margin-bottom: 25px;
+        }
+
+        #start-button {
+            background-color: #28a745; 
+            color: white; 
+            padding: 10px 30px;
+            font-size: 1.1em;
+            font-weight: 600;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        #start-button:hover {
+            background-color: #1f8b38;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="welcome-modal">
+        <div class="modal-content">
+            <h2>Namaste & Welcome to Incredible India! 🇮🇳</h2>
+            <p>Your interactive local guide to the wonders, history, and vibrant culture of our nation.</p>
+            <button id="start-button">Start Exploring</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1>🇮🇳 Explore Incredible India: Your Local Guide</h1>
+        
+        <div class="input-section">
+            <div class="input-group">
+                <label for="state-select">Select State/UT:</label>
+                <select id="state-select">
+                    <option value="">-- Select a State --</option>
+                </select>
+            </div>
+            
+            <div class="input-group">
+                <label for="city-select">Select City:</label>
+                <select id="city-select" disabled>
+                    <option value="">-- Select a State First --</option>
+                </select>
+            </div>
+            
+            <div class="input-group">
+                <label for="guide-button">Need a Local Guide?</label>
+                <button id="guide-button">Find Guide Now ➡️</button>
+            </div>
+            
+            <button id="search-button">Search Places</button>
+        </div>
+
+        <div id="initial-message">
+            <p style="text-align: center; color: #555;">Select a State and City from the dropdowns above to view tourist information.</p>
+        </div>
+
+        <div id="loader" class="loader"></div>
+        
+        <div id="results-container">
+            </div>
+
+    </div>
+
+    <script src="tourist_guide.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Saathi — Safety Chatbot (SOS in Header)</title>
+
+<script src="https://unpkg.com/@lottiefiles/lottie-player@1.5.7/dist/lottie-player.js"></script>
+
+<style>
+:root {
+  --blue: #1976d2;
+  --accent: #e53935;
+  --bg: #f4f7fb;
+  --card: #fff;
+}
+
+body {
+  font-family: Inter, Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  margin: 0;
+}
+
+.chatbot {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  width: 360px;
+  max-width: calc(100% - 40px);
+  background: var(--card);
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(12, 20, 40, 0.15);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  z-index: 9999;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  background: var(--blue);
+  color: #fff;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+}
+
+.robot {
+  width: 40px;
+  height: 40px;
+  margin-right: 10px;
+}
+
+.title {
+  font-size: 1.1em;
+  font-weight: 600;
+}
+
+.sub {
+  font-size: 0.8em;
+  opacity: 0.8;
+}
+
+.sos-header {
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 6px;
+  font-size: 1.1em;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: background 0.2s;
+}
+
+.sos-header:hover {
+  background: #c62828;
+}
+
+.body {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.messages {
+  padding: 15px;
+  flex-grow: 1;
+  overflow-y: auto;
+  height: 400px; /* Default height */
+}
+
+.message-box {
+  display: flex;
+  margin-bottom: 15px;
+}
+
+.user-message {
+  justify-content: flex-end;
+}
+
+.bot-message .content {
+  background: #e0e0e0;
+  color: #333;
+  border-radius: 15px 15px 15px 0;
+  margin-right: auto;
+}
+
+.user-message .content {
+  background: var(--blue);
+  color: white;
+  border-radius: 15px 15px 0 15px;
+  margin-left: auto;
+}
+
+.message-box .content {
+  max-width: 80%;
+  padding: 10px 15px;
+  line-height: 1.4;
+  font-size: 0.9em;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.footer {
+  display: flex;
+  padding: 10px;
+  border-top: 1px solid #eee;
+}
+
+.input {
+  flex-grow: 1;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 20px;
+  margin-right: 8px;
+  font-size: 1em;
+  outline: none;
+}
+
+.send, .mic {
+  background: var(--blue);
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2em;
+  margin-left: 5px;
+  transition: background 0.2s;
+}
+
+.send:hover, .mic:hover {
+  background: #1565c0;
+}
+
+.small-note {
+  font-size: 0.75em;
+  color: #888;
+  text-align: center;
+  padding: 5px 0;
+  border-top: 1px solid #eee;
+}
+</style>
+</head>
+<body>
+
+<div class="chatbot" id="saathi">
+  <div class="header">
+    <div class="header-left">
+      <div class="robot">
+        <lottie-player src="https://assets2.lottiefiles.com/packages/lf20_x62chJ.json" background="transparent" speed="1" style="width:46px;height:46px" loop autoplay></lottie-player>
+      </div>
+      <div>
+        <div class="title">Saathi — Your Safety Guide</div>
+        <div class="sub">Text & voice — English / हिन्दी</div>
+      </div>
+    </div>
+    <button class="sos-header" id="sosBtn" title="Send SOS">SOS</button>
+  </div>
+
+  <div class="body">
+    <div class="messages" id="messages"></div>
+
+    <div class="footer">
+      <input id="textInput" class="input" placeholder="Type or speak... (press Enter)"/>
+      <button id="micBtn" class="mic" title="Start/Stop voice">🎙️</button>
+      <button id="sendBtn" class="send" title="Send message">➤</button>
+    </div>
+    <div class="small-note" id="tip">Tip: try "I think someone is following me" or "nearest metro station"</div>
+  </div>
+</div>
+
+<script>
+// CONFIG
+let touristLocation = { lat: 28.6195, lng: 77.2200 };
+let emergencyContact = { name: "Ranu", phone: "+911234567890" };
+
+// DOM Elements
+const messages = document.getElementById('messages');
+const textInput = document.getElementById('textInput');
+const sendBtn = document.getElementById('sendBtn');
+const micBtn = document.getElementById('micBtn');
+const sosBtn = document.getElementById('sosBtn');
+
+// State Variables
+let isSpeaking = false;
+let synth = null;
+let voices = [];
+
+// Initial Message
+appendBot("Hello! I'm Saathi, your Smart Safety Guide. How can I help you today?");
+
+// Text-to-Speech (TTS) Initialization
+if ('speechSynthesis' in window) {
+  synth = window.speechSynthesis;
+  // Load voices asynchronously
+  synth.onvoiceschanged = () => {
+    voices = synth.getVoices();
+  };
+}
+
+function speak(text) {
+  if (synth && voices.length > 0) {
+    const utterance = new SpeechSynthesisUtterance(text);
+    // Try to find an Indian English voice if available
+    const indianVoice = voices.find(v => v.lang === 'en-IN');
+    utterance.voice = indianVoice || voices[0];
+    synth.speak(utterance);
+    isSpeaking = true;
+    utterance.onend = () => { isSpeaking = false; };
+  } else {
+    console.warn("TTS not available or voices not loaded.");
+  }
+}
+
+// Message Functions
+function appendUser(text) {
+  const box = document.createElement('div');
+  box.className = 'message-box user-message';
+  box.innerHTML = `<div class="content">${escapeHtml(text)}</div>`;
+  messages.appendChild(box);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+function appendBot(text) {
+  const box = document.createElement('div');
+  box.className = 'message-box bot-message';
+  box.innerHTML = `<div class="content">${text}</div>`; // Note: text might contain HTML from function below
+  messages.appendChild(box);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+// NLP (Natural Language Processing) Simulation
+function handleInput(text) {
+  const lowerText = text.toLowerCase().trim();
+  appendUser(text);
+  textInput.value = '';
+
+  let response = "I'm not sure how to respond to that. Try asking about local safety tips or emergency contacts.";
+  let doSpeak = true;
+
+  if (lowerText.includes("hello") || lowerText.includes("hi")) {
+    response = "Hello! I'm here to ensure your safety. What information do you need?";
+  } else if (lowerText.includes("following me") || lowerText.includes("unsafe") || lowerText.includes("scared")) {
+    response = "I understand you feel unsafe. Please use the **SOS** button in the header if it's an emergency, or tell me where you are and I can find a safe spot nearby.";
+  } else if (lowerText.includes("emergency contact")) {
+    response = `Your current emergency contact is ${emergencyContact.name} at **${emergencyContact.phone}**. I can call them immediately if you use the SOS button.`;
+  } else if (lowerText.includes("metro station") || lowerText.includes("taxi")) {
+    response = "I see your location. The nearest metro station is **Central Park** (1.2 km). Would you like me to book a verified taxi? Say 'Yes' or 'No'.";
+  } else if (lowerText.includes("yes")) {
+    response = "Booking confirmed. A verified, safety-rated driver is on the way. Please stay calm.";
+  } else if (lowerText.includes("weather")) {
+    response = "The current weather in your area is **28°C and partly cloudy**. Remember to stay hydrated.";
+  } else if (lowerText.includes("safety tips")) {
+    response = "Here are a few quick safety tips: 1. Keep your phone charged. 2. Share your GPS location with a trusted friend. 3. Use certified tourist guides.";
+  } else if (lowerText.includes("incident log") && typeof smartTouristChain !== 'undefined') {
+      // BLOCKCHAIN MODIFICATION: Check and display the chain length
+      response = `The Smart Safety Chain currently holds **${smartTouristChain.chain.length}** immutable safety blocks. Your incidents are permanently recorded.`;
+  } else {
+    doSpeak = false;
+  }
+  
+  appendBot(response);
+  if (doSpeak) speak(response);
+}
+
+// Input Handling
+sendBtn.addEventListener('click', () => {
+  if (textInput.value.trim() !== '') {
+    handleInput(textInput.value);
+  }
+});
+
+textInput.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter' && textInput.value.trim() !== '') {
+    e.preventDefault(); 
+    sendBtn.click();
+  }
+});
+
+let recognition = null, recognizing = false;
+if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SR();
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+  recognition.lang = 'en-IN';
+  recognition.onstart = () => { recognizing = true; micBtn.innerText = '🔴'; }
+  recognition.onend = () => { recognizing = false; micBtn.innerText = '🎙️'; }
+  recognition.onerror = (e) => { recognizing = false; micBtn.innerText = '🎙️'; }
+  recognition.onresult = (ev) => { const t = ev.results[0][0].transcript; textInput.value = t; handleInput(t); }
+}
+micBtn.addEventListener('click', () => {
+  if (!recognition) { alert('Speech recognition not supported'); return; }
+  if (recognizing) recognition.stop(); else recognition.start();
+});
+
+// SOS Button Click - MODIFIED FOR BLOCKCHAIN
+sosBtn.addEventListener('click', () => {
+  const ok = confirm("🚨 Confirm SOS? This will call your emergency contact immediately.");
+  if (!ok) { appendBot("SOS cancelled. If needed, you can press SOS anytime."); return; }
+  
+  // BLOCKCHAIN MODIFICATION START: Log SOS event
+  if (typeof smartTouristChain !== 'undefined') {
+    const currentTimestamp = Date.now();
+    const incidentData = {
+        id: TOURIST_DID,
+        type: "Incident Log",
+        incidentType: "Manual SOS Button Activation",
+        location: touristLocation, 
+        timestamp: currentTimestamp,
+        status: "Critical SOS Alert"
+    };
+    
+    const newSOSBlock = new Block(
+        smartTouristChain.getLatestBlock().index + 1,
+        currentTimestamp,
+        incidentData
+    );
+    smartTouristChain.addBlock(newSOSBlock);
+    
+    const hash = newSOSBlock.hash.substring(0, 8);
+    appendBot(`🚨 SOS activated. **Incident logged on Blockchain (Hash: ${hash}...)**. Calling your emergency contact now...`);
+    speak("SOS activated. Incident logged on blockchain. Calling your emergency contact now.");
+  } else {
+    appendBot("🚨 SOS activated. Calling your emergency contact now...");
+    speak("SOS activated. Calling your emergency contact now.");
+  }
+  // BLOCKCHAIN MODIFICATION END
+
+  setTimeout(() => window.location.href = `tel:${emergencyContact.phone}`, 900);
+});
+
+function escapeHtml(t) {
+  const d = document.createElement('div');
+  d.textContent = t;
+  return d.innerHTML;
+}
+</script>
+
+<script src="blockchain.js"></script>
+
+</body>
+</html>
