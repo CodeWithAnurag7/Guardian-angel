@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Your Local Tourist Guide</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; 
+            padding: 0; 
+            background-color: #f8f9fa;
+        }
+        .guide-container {
+            max-width: 1000px; 
+            margin: 30px auto; 
+            padding: 30px; 
+            background-color: white; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); 
+        }
+        h1 {
+            color: #1a5276; 
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #f1c40f;
+            padding-bottom: 10px;
+        }
+        
+        /* Input Section Styling */
+        .search-section {
+            display: grid; 
+            grid-template-columns: 1fr 1fr 1fr 0.5fr; 
+            gap: 15px; 
+            margin-bottom: 30px; 
+            align-items: end;
+            padding: 15px;
+            background-color: #e9ecef;
+            border-radius: 8px;
+        }
+        .input-group { 
+            width: 100%;
+        }
+        label { 
+            display: block; 
+            margin-bottom: 5px; 
+            font-weight: 600; 
+            color: #343a40; 
+            font-size: 0.95em;
+        }
+        select, button {
+            width: 100%;
+            padding: 10px 15px;
+            border-radius: 6px;
+            border: 2px solid #ced4da;
+            font-size: 16px;
+            box-sizing: border-box;
+            background-color: #ffffff;
+            height: 44px; 
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        button:hover {
+            background-color: #1f8b38;
+        }
+
+        /* Guide Profiles Grid */
+        #guide-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-top: 30px;
+        }
+        .profile-card {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .profile-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        /* Image styling */
+        .profile-pic {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 15px;
+            border: 4px solid #1a5276;
+            object-position: center; 
+        }
+
+        .profile-card h3 {
+            margin: 5px 0;
+            color: #1a5276;
+            font-size: 1.6em;
+        }
+        .profile-card p {
+            margin: 5px 0;
+            font-size: 1em;
+            color: #555;
+        }
+        .contact-info {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px dashed #ced4da;
+            font-size: 1em;
+        }
+        .contact-info a {
+            color: #28a745;
+            text-decoration: none;
+            display: block;
+            margin-bottom: 5px;
+        }
+        .contact-info a:hover {
+            text-decoration: underline;
+        }
+        #message {
+            text-align: center;
+            margin-top: 40px;
+            font-size: 1.1em;
+            color: #dc3545;
+        }
+        @media (max-width: 768px) {
+            .search-section {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="guide-container">
+        <h1>Find Your Certified Local Guide</h1>
+        
+        <div class="search-section">
+            <div class="input-group">
+                <label for="guide-state-select">Select State/UT:</label>
+                <select id="guide-state-select">
+                    <option value="">-- Select a State --</option>
+                </select>
+            </div>
+            
+            <div class="input-group">
+                <label for="guide-city-select">Select City:</label>
+                <select id="guide-city-select" disabled>
+                    <option value="">-- Select a State First --</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label for="guide-gender-select">Guide Preference:</label>
+                <select id="guide-gender-select">
+                    <option value="male">Male Guide</option>
+                    <option value="female">Female Guide</option>
+                </select>
+            </div>
+            
+            <button id="guide-search-button">Search</button>
+        </div>
+
+        <div id="message">Please select a State and City to view available guides.</div>
+
+        <div id="guide-list">
+            </div>
+    </div>
+
+    <script>
+        // --- 1. SIMULATED DATABASE ---
+        const simulatedDatabase = {
+            "Delhi": { "New Delhi": { male: 3, female: 2 }, "Old Delhi": { male: 1, female: 1 } },
+            "Rajasthan": { "Jaipur": { male: 4, female: 3 }, "Udaipur": { male: 2, female: 2 } },
+            "Maharashtra": { "Mumbai": { male: 5, female: 4 } },
+            "Uttar Pradesh": { "Agra": { male: 6, female: 5 }, "Varanasi": { male: 2, female: 1 } },
+            "Goa": { "North Goa": { male: 3, female: 2 } },
+            "Karnataka": { "Bengaluru": { male: 4, female: 4 } },
+            "Himachal Pradesh": { "Shimla": { male: 2, female: 1 } },
+            "Kerala": { "Kochi": { male: 3, female: 3 } },
+            "Tamil Nadu": { "Madurai": { male: 1, female: 1 } }
+        };
+
+        // --- 2. GUIDE PROFILES (Using Stable Unsplash Image Links) ---
+        // Using distinct photo IDs from the Unsplash Source API. These photos show diverse individuals.
+        const maleGuides = [
+            { name: "Arjun Singh", specialization: "History & Monuments", email: "arjun.s@tour.in", phone: "+91 98765 43210", img: "https://source.unsplash.com/120x120/?portrait,man,face,india" },
+            { name: "Ravi Sharma", specialization: "Food & Culture Tours", email: "ravi.sharma@tour.in", phone: "+91 88888 11111", img: "https://source.unsplash.com/120x120/?portrait,male,face,indian" },
+            { name: "Kiran Patil", specialization: "Adventure & Trekking", email: "kiran.p@tour.in", phone: "+91 99999 55555", img: "https://source.unsplash.com/120x120/?portrait,gentleman,smile" },
+            { name: "Deepak Kumar", specialization: "Photography Tours", email: "deepak.k@tour.in", phone: "+91 77777 00000", img: "https://source.unsplash.com/120x120/?portrait,guy,happy,india" },
+            { name: "Vikas Dubey", specialization: "Heritage Sites", email: "vikas.d@tour.in", phone: "+91 91234 56789", img: "https://source.unsplash.com/120x120/?portrait,business,man" },
+            { name: "Gaurav Mehta", specialization: "Local Markets", email: "gaurav.m@tour.in", phone: "+91 80123 45678", img: "https://source.unsplash.com/120x120/?portrait,young,male" }
+        ];
+
+        const femaleGuides = [
+            { name: "Priya Rao", specialization: "Temples & Architecture", email: "priya.rao@tour.in", phone: "+91 98123 45678", img: "https://source.unsplash.com/120x120/?portrait,woman,face,india" },
+            { name: "Anjali Verma", specialization: "Art & Handicrafts", email: "anjali.v@tour.in", phone: "+91 80000 20000", img: "https://source.unsplash.com/120x120/?portrait,female,face,indian" },
+            { name: "Neha Joshi", specialization: "Family & Kids Tours", email: "neha.j@tour.in", phone: "+91 90000 30000", img: "https://source.unsplash.com/120x120/?portrait,lady,smile" },
+            { name: "Sonia Das", specialization: "Wildlife & Nature", email: "sonia.d@tour.in", phone: "+91 75555 64444", img: "https://source.unsplash.com/120x120/?portrait,girl,happy,india" },
+            { name: "Shalini Iyer", specialization: "Cultural Walks", email: "shalini.i@tour.in", phone: "+91 99111 22333", img: "https://source.unsplash.com/120x120/?portrait,young,female" }
+        ];
+
+        // --- 3. DOM ELEMENTS ---
+        const guideStateSelect = document.getElementById('guide-state-select');
+        const guideCitySelect = document.getElementById('guide-city-select');
+        const guideGenderSelect = document.getElementById('guide-gender-select');
+        const guideSearchButton = document.getElementById('guide-search-button');
+        const guideListElement = document.getElementById('guide-list');
+        const messageElement = document.getElementById('message');
+
+        // --- 4. FUNCTIONS ---
+
+        function populateStates() {
+            const states = Object.keys(simulatedDatabase).sort();
+            guideStateSelect.innerHTML = '<option value="">-- Select a State --</option>';
+            states.forEach(state => {
+                const option = document.createElement('option');
+                option.value = state;
+                option.textContent = state;
+                guideStateSelect.appendChild(option);
+            });
+        }
+
+        function populateCities() {
+            const selectedState = guideStateSelect.value;
+            guideCitySelect.innerHTML = '';
+            guideCitySelect.disabled = true;
+            guideListElement.innerHTML = '';
+            messageElement.textContent = "Select a City to view available guides.";
+
+            if (!selectedState) {
+                guideCitySelect.innerHTML = '<option value="">-- Select a State First --</option>';
+                return;
+            }
+
+            const cities = Object.keys(simulatedDatabase[selectedState]).sort();
+            guideCitySelect.disabled = false;
+            
+            const defaultOption = document.createElement('option');
+            defaultOption.value = "";
+            defaultOption.textContent = "-- Select a City --";
+            guideCitySelect.appendChild(defaultOption);
+
+            cities.forEach(city => {
+                const option = document.createElement('option');
+                option.value = city;
+                option.textContent = city;
+                guideCitySelect.appendChild(option);
+            });
+        }
+        
+        function handleGuideSearch() {
+            const selectedState = guideStateSelect.value;
+            const selectedCity = guideCitySelect.value;
+            const selectedGender = guideGenderSelect.value;
+
+            if (!selectedState || !selectedCity) {
+                messageElement.textContent = "Please select both a State and a City.";
+                guideListElement.innerHTML = '';
+                return;
+            }
+
+            const cityData = simulatedDatabase[selectedState][selectedCity];
+            
+            if (!cityData) {
+                messageElement.textContent = `Sorry, we have no registered guides for ${selectedCity} yet.`;
+                guideListElement.innerHTML = '';
+                return;
+            }
+
+            const guidesPool = (selectedGender === 'male') ? maleGuides : femaleGuides;
+            const count = cityData[selectedGender] || 0; 
+            
+            if (count === 0) {
+                 messageElement.textContent = `Sorry, no ${selectedGender} guides found for ${selectedCity}. Try selecting the other gender option.`;
+                 guideListElement.innerHTML = '';
+                 return;
+            }
+
+            const availableGuides = guidesPool.slice(0, count);
+
+            messageElement.textContent = `Showing ${availableGuides.length} ${selectedGender} guide(s) for ${selectedCity}.`;
+            renderProfiles(availableGuides);
+        }
+
+        function renderProfiles(guides) {
+            guideListElement.innerHTML = guides.map(guide => `
+                <div class="profile-card">
+                    <img src="${guide.img}" alt="${guide.name}" class="profile-pic">
+                    <h3>${guide.name}</h3>
+                    <p><strong>Specialization:</strong> ${guide.specialization}</p>
+                    <div class="contact-info">
+                        <p>📧 <a href="mailto:${guide.email}">${guide.email}</a></p>
+                        <p>📞 <a href="tel:${guide.phone}">${guide.phone}</a></p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // --- 5. INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            populateStates();
+            
+            guideStateSelect.addEventListener('change', populateCities);
+            guideSearchButton.addEventListener('click', handleGuideSearch);
+            guideCitySelect.addEventListener('change', () => { guideListElement.innerHTML = ''; messageElement.textContent = "Click Search to view profiles."; });
+            guideGenderSelect.addEventListener('change', () => { guideListElement.innerHTML = ''; messageElement.textContent = "Click Search to view profiles."; });
+        });
+    </script>
+
+</body>
+</html>
