@@ -20,7 +20,7 @@
 <body>
 
 <h1>My Movement Safety</h1>
-<div id="alertBox" class="safe">&#9989; Tourist is currently safe</div>
+<div id="alertBox" class="safe">✅ Tourist is currently safe</div>
 <div id="map"></div>
 <div id="prompt"></div>
 
@@ -52,41 +52,58 @@
         radius: 500
     }).addTo(map);
 
+    var path = [
+        [28.6110,77.2100], [28.6120,77.2120], [28.6130,77.2140],
+        [28.6140,77.2160], [28.6150,77.2180], [28.6165,77.2190],
+        [28.6180,77.2195], [28.6195,77.2200], // Enters danger zone here
+        [28.6200,77.2210], [28.6210,77.2220], [28.6220,77.2210],
+        [28.6210,77.2200], [28.6190,77.2180], [28.6170,77.2160] // Leaves danger zone
+    ];
+
+    var SAFETY_RADIUS = 500;
     var alertBox = document.getElementById("alertBox");
     var promptDiv = document.getElementById("prompt");
-
-    // Simulated tourist path
-    var path = [
-        [28.6110,77.2100],[28.6120,77.2120],[28.6130,77.2140],
-        [28.6140,77.2160],[28.6150,77.2180],[28.6165,77.2190],
-        [28.6180,77.2195],[28.6195,77.2200]
-    ];
     var index = 0;
     var inDanger = false;
-
+    
+    // Animate movement
     function moveTourist(){
-        if(index >= path.length) return;
-        touristMarker.setLatLng(path[index]);
+        if(index >= path.length) {
+            index = 0; // Loop the path for continuous simulation
+        }
+        var currentPosition = path[index];
+        touristMarker.setLatLng(currentPosition);
 
-        // Check if in any danger zone
+        // Check for danger
+        var dangerMessages = [];
+        var previouslyInDanger = inDanger;
         inDanger = false;
-        var triggeredReasons = [];
         dangerZones.forEach(function(zone){
-            var distance = map.distance(path[index], [zone.lat, zone.lng]);
-            if(distance <= 500 + zone.radius){
+            // Calculate distance in meters
+            var distance = map.distance(currentPosition, [zone.lat, zone.lng]); 
+            if(distance <= SAFETY_RADIUS + zone.radius){
+                dangerMessages.push(zone.reason);
                 inDanger = true;
-                triggeredReasons.push(zone.reason);
             }
         });
 
         if(inDanger){
             touristMarker.setStyle({color:'red', fillColor:'red'});
             alertBox.className = "danger";
-            alertBox.innerHTML = "&#9888; Tourist is in a danger zone! Reason: " + triggeredReasons.join(", ");
+            alertBox.innerHTML = "⚠ WARNING: You are entering a danger zone! Reason: " + dangerMessages.join(", ");
+            safetyPrompt();
+            
+            // BLOCKCHAIN MODIFICATION START: Geo-Fence Incident Logging
+            if (!previouslyInDanger && typeof smartTouristChain !== 'undefined') {
+                logIncident("Geo-Fence Alert", currentPosition);
+            }
+            // BLOCKCHAIN MODIFICATION END
+
         } else {
             touristMarker.setStyle({color:'green', fillColor:'green'});
             alertBox.className = "safe";
-            alertBox.innerHTML = "&#9989; Tourist is currently safe";
+            alertBox.innerHTML = "✅ Tourist is currently safe";
+            promptDiv.innerHTML = ""; // Clear prompt when safe
         }
 
         index++;
@@ -106,23 +123,52 @@
 
     function safeClick(){
         alertBox.className = "safe";
-        alertBox.innerHTML = "&#9989; Tourist confirmed safe";
+        alertBox.innerHTML = "✅ Tourist confirmed safe";
         promptDiv.innerHTML = "";
     }
 
     function dangerClick(){
         alertBox.className = "danger";
-        alertBox.innerHTML = "&#9888; Tourist is in danger! Help info displayed below";
+        alertBox.innerHTML = "⚠ Tourist is in danger! Help info displayed below";
         promptDiv.innerHTML = `
             <p>Nearest Police Station: <a href="https://www.google.com/maps/dir/?api=1&destination=28.6125,77.2250" target="_blank">Route</a>, Phone: 100</p>
-            <p>Nearest Hospital: <a href="https://www.google.com/maps/dir/?api=1&destination=28.6150,77.2180" target="_blank">Route</a>, Phone: 102</p>
+            <p>Nearest Hospital: <a href="https://www.google.com/maps/dir/?api=1&destination=28.6150,77.21" target="_blank">Route</a>, Phone: 102</p>
         `;
+        
+        // BLOCKCHAIN MODIFICATION START: Manual Danger Confirmation Logging
+        if (typeof smartTouristChain !== 'undefined') {
+            const currentPosition = touristMarker.getLatLng();
+            const hash = logIncident("Manual Danger Confirmation", currentPosition);
+            alertBox.innerHTML += `<br>Chain Logged. Hash: ${hash.substring(0, 10)}...`;
+        }
+        // BLOCKCHAIN MODIFICATION END
     }
-
-    // Trigger prompt every 30 min (for demo every 15 sec)
-    setInterval(safetyPrompt, 15000);
-
+    
+    // BLOCKCHAIN MODIFICATION START: Helper function for logging
+    function logIncident(incidentType, location) {
+        // TOURIST_DID is defined in blockchain.js
+        const incidentData = {
+            id: TOURIST_DID,
+            type: "Incident Log",
+            incidentType: incidentType,
+            location: { lat: location.lat, lng: location.lng },
+            timestamp: Date.now(),
+            status: "Alert Raised"
+        };
+        
+        const newIncidentBlock = new Block(
+            smartTouristChain.getLatestBlock().index + 1,
+            Date.now(),
+            incidentData
+        );
+        smartTouristChain.addBlock(newIncidentBlock);
+        
+        return newIncidentBlock.hash;
+    }
+    // BLOCKCHAIN MODIFICATION END
 </script>
+
+<script src="blockchain.js"></script>
 
 </body>
 </html>
