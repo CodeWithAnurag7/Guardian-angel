@@ -11,94 +11,122 @@
         #alert.danger { color: red; }
         #map { height: 600px; width: 100%; }
     </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-<h1>Tourist Safety App</h1>
-<div id="alert" class="safe">&#9989; You are in a safe area</div>
-<div id="map"></div>
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-shield-alt me-2"></i>
+                <span data-i18n="app_name">TravelSaathi</span>
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html" data-i18n="nav_home">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="area.html" data-i18n="nav_area">Area Coverage</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="dashboard.html" data-i18n="nav_dashboard">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="specifications.html" data-i18n="nav_specs">Specifications</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
 
-<script>
-    // Initialize map
-    var map = L.map('map').setView([28.6110, 77.2100], 15);
+    <script>
+        // Initialize map
+        var map = L.map('map').setView([28.6110, 77.2100], 15);
 
-    // Add tile layer
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19
-    }).addTo(map);
+        // Add tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19
+        }).addTo(map);
 
-    // Danger zones
-    var dangerZones = [
-        {lat:28.6129, lng:77.2295, radius:400, reason:"Riot reported"},
-        {lat:28.6200, lng:77.2200, radius:300, reason:"Flooded area"}
-    ];
+        // Danger zones
+        var dangerZones = [
+            {lat:28.6129, lng:77.2295, radius:400, reason:"Riot reported"},
+            {lat:28.6200, lng:77.2200, radius:300, reason:"Flooded area"}
+        ];
 
-    dangerZones.forEach(function(zone){
-        L.circle([zone.lat, zone.lng], {
-            color: 'red',
-            fillColor: 'red',
-            fillOpacity: 0.4,
-            radius: zone.radius
-        }).addTo(map).bindPopup("Danger: " + zone.reason);
-    });
-
-    // Tourist path
-    var path = [
-        [28.6110,77.2100],
-        [28.6120,77.2120],
-        [28.6130,77.2140],
-        [28.6140,77.2160],
-        [28.6150,77.2180],
-        [28.6165,77.2190],
-        [28.6180,77.2195],
-        [28.6195,77.2200]
-    ];
-
-    var SAFETY_RADIUS = 500;
-
-    // Add tourist bubble
-    var touristCircle = L.circle(path[0], {
-        color: 'green',
-        fillColor: 'green',
-        fillOpacity: 0.3,
-        radius: SAFETY_RADIUS
-    }).addTo(map);
-
-    var alertBox = document.getElementById("alert");
-
-    // Animate movement
-    var index = 0;
-    function moveTourist(){
-        if(index >= path.length) return;
-        touristCircle.setLatLng(path[index]);
-
-        // Check for danger
-        var dangerMessages = [];
         dangerZones.forEach(function(zone){
-            var distance = map.distance(path[index], [zone.lat, zone.lng]);
-            if(distance <= SAFETY_RADIUS + zone.radius){
-                dangerMessages.push(zone.reason);
-            }
+            L.circle([zone.lat, zone.lng], {
+                color: 'red',
+                fillColor: 'red',
+                fillOpacity: 0.4,
+                radius: zone.radius
+            }).addTo(map).bindPopup("Danger: " + zone.reason);
         });
 
-        if(dangerMessages.length > 0){
-            touristCircle.setStyle({color:'red', fillColor:'red'});
-            alertBox.className = "danger";
-            alertBox.innerHTML = "&#9888; WARNING: You are entering a danger zone! Reason: " + dangerMessages.join(", ");
-        } else {
-            touristCircle.setStyle({color:'green', fillColor:'green'});
-            alertBox.className = "safe";
-            alertBox.innerHTML = "&#9989; You are in a safe area";
+        // Tourist path
+        var path = [
+            [28.6110,77.2100],
+            [28.6120,77.2120],
+            [28.6130,77.2140],
+            [28.6140,77.2160],
+            [28.6150,77.2180],
+            [28.6165,77.2190],
+            [28.6180,77.2195],
+            [28.6195,77.2200]
+        ];
+
+        var SAFETY_RADIUS = 500;
+
+        // Add tourist bubble
+        var touristCircle = L.circle(path[0], {
+            color: 'green',
+            fillColor: 'green',
+            fillOpacity: 0.3,
+            radius: SAFETY_RADIUS
+        }).addTo(map);
+
+        var alertBox = document.getElementById("alert");
+
+        // Animate movement
+        var index = 0;
+        function moveTourist(){
+            if(index >= path.length) return;
+            touristCircle.setLatLng(path[index]);
+
+            // Check for danger
+            var dangerMessages = [];
+            dangerZones.forEach(function(zone){
+                var distance = map.distance(path[index], [zone.lat, zone.lng]);
+                if(distance <= SAFETY_RADIUS + zone.radius){
+                    dangerMessages.push(zone.reason);
+                }
+            });
+
+            if(dangerMessages.length > 0){
+                touristCircle.setStyle({color:'red', fillColor:'red'});
+                alertBox.className = "danger";
+                alertBox.innerHTML = "&#9888; WARNING: You are entering a danger zone! Reason: " + dangerMessages.join(", ");
+            } else {
+                touristCircle.setStyle({color:'green', fillColor:'green'});
+                alertBox.className = "safe";
+                alertBox.innerHTML = "&#9989; You are in a safe area";
+            }
+
+            index++;
+            setTimeout(moveTourist, 1500); // slower animation
         }
 
-        index++;
-        setTimeout(moveTourist, 1500); // slower animation
-    }
+        moveTourist();
+    </script>
 
-    moveTourist();
-</script>
-
-<script src="blockchain.js"></script>
+    <script src="blockchain.js"></script>
+    
 
 </body>
 </html>

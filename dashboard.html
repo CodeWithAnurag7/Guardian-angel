@@ -6,10 +6,21 @@
     <title>Safety Dashboard - TouristGuard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        #movementAlertBox { width: 100%; margin: 10px auto; padding: 15px; font-size: 18px; border-radius: 8px; text-align: center; }
+        .safe { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .danger { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        #movementMap { height: 300px; width: 100%; border-radius: 10px; margin-bottom: 15px; }
+        #safetyPrompt { width: 100%; margin: 10px auto; text-align: center; }
+        #safetyPrompt button { padding: 8px 15px; margin: 5px; font-size: 14px; cursor: pointer; border-radius: 5px; border: none; color: white; }
+        #safetyPrompt button.safeBtn { background-color: #28a745; }
+        #safetyPrompt button.dangerBtn { background-color: #dc3545; }
+    </style>
 </head>
 <body>
-    <!-- Navigation (same as index.html) -->
+    <!-- Navigation (same as original dashboard.html) -->
     <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
         <div class="container">
             <a class="navbar-brand" href="index.html">
@@ -30,7 +41,23 @@
                 </div>
             </div>
 
-            <!-- ML Model Integration Area -->
+            <!-- Movement Safety Monitoring (from movement.html) -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h4>Real-time Movement Safety</h4>
+                        </div>
+                        <div class="card-body">
+                            <div id="movementAlertBox" class="safe">✅ Tourist is currently safe</div>
+                            <div id="movementMap"></div>
+                            <div id="safetyPrompt"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ML Model Integration Area (original dashboard.html content) -->
             <div class="row mb-4">
                 <div class="col-12">
                     <div class="card">
@@ -42,7 +69,6 @@
                             <div class="row">
                                 <div class="col-md-8">
                                     <div id="predictionChart" class="chart-container">
-                                        <!-- ML Model will render prediction chart here -->
                                         <div class="text-center py-4">
                                             <i class="fas fa-chart-line fa-2x mb-3 text-primary"></i>
                                             <h6 data-i18n="ml_chart_loading">Loading ML Prediction Analytics...</h6>
@@ -129,7 +155,6 @@
                         </div>
                         <div class="card-body">
                             <div id="alertFeed" class="alert-feed">
-                                <!-- ML-generated alerts will appear here -->
                                 <div class="alert alert-warning">
                                     <i class="fas fa-brain me-2"></i>
                                     <strong data-i18n="ml_alert">ML Alert:</strong>
@@ -144,7 +169,115 @@
     </section>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="js/language.js"></script>
     <script src="js/ml-dashboard.js"></script>
+    
+    <!-- Movement Safety Script (from movement.html) -->
+    <script>
+        // Initialize map
+        var movementMap = L.map('movementMap').setView([28.6110, 77.2100], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 19}).addTo(movementMap);
+
+        // Danger zones (red zones)
+        var dangerZones = [
+            {lat:28.6129, lng:77.2295, radius:400, reason:"Riot reported"},
+            {lat:28.6200, lng:77.2200, radius:300, reason:"Flooded area"}
+        ];
+
+        dangerZones.forEach(function(zone){
+            L.circle([zone.lat, zone.lng], {
+                color: 'red',
+                fillColor: 'red',
+                fillOpacity: 0.4,
+                radius: zone.radius
+            }).addTo(movementMap).bindPopup("Danger: " + zone.reason);
+        });
+
+        // Tourist marker
+        var touristMarker = L.circle([28.6110,77.2100], {
+            color: 'green',
+            fillColor: 'green',
+            fillOpacity: 0.4,
+            radius: 500
+        }).addTo(movementMap);
+
+        var path = [
+            [28.6110,77.2100], [28.6120,77.2120], [28.6130,77.2140],
+            [28.6140,77.2160], [28.6150,77.2180], [28.6165,77.2190],
+            [28.6180,77.2195], [28.6195,77.2200], // Enters danger zone here
+            [28.6200,77.2210], [28.6210,77.2220], [28.6220,77.2210],
+            [28.6210,77.2200], [28.6190,77.2180], [28.6170,77.2160] // Leaves danger zone
+        ];
+
+        var SAFETY_RADIUS = 500;
+        var movementAlertBox = document.getElementById("movementAlertBox");
+        var safetyPrompt = document.getElementById("safetyPrompt");
+        var index = 0;
+        var inDanger = false;
+        
+        // Animate movement
+        function moveTourist(){
+            if(index >= path.length) {
+                index = 0; // Loop the path for continuous simulation
+            }
+            var currentPosition = path[index];
+            touristMarker.setLatLng(currentPosition);
+
+            // Check for danger
+            var dangerMessages = [];
+            var previouslyInDanger = inDanger;
+            inDanger = false;
+            dangerZones.forEach(function(zone){
+                // Calculate distance in meters
+                var distance = movementMap.distance(currentPosition, [zone.lat, zone.lng]); 
+                if(distance <= SAFETY_RADIUS + zone.radius){
+                    dangerMessages.push(zone.reason);
+                    inDanger = true;
+                }
+            });
+
+            if(inDanger){
+                touristMarker.setStyle({color:'red', fillColor:'red'});
+                movementAlertBox.className = "danger";
+                movementAlertBox.innerHTML = "⚠ WARNING: You are entering a danger zone! Reason: " + dangerMessages.join(", ");
+                showSafetyPrompt();
+            } else {
+                touristMarker.setStyle({color:'green', fillColor:'green'});
+                movementAlertBox.className = "safe";
+                movementAlertBox.innerHTML = "✅ Tourist is currently safe";
+                safetyPrompt.innerHTML = ""; // Clear prompt when safe
+            }
+
+            index++;
+            setTimeout(moveTourist, 1500);
+        }
+        moveTourist();
+
+        // Safety prompt function
+        function showSafetyPrompt(){
+            if(!inDanger) return; // Only trigger if in danger
+            safetyPrompt.innerHTML = `
+                <p style="font-size:16px;">Are you safe?</p>
+                <button class="safeBtn" onclick="safeClick()">Yes, I am safe</button>
+                <button class="dangerBtn" onclick="dangerClick()">No, I am in danger</button>
+            `;
+        }
+
+        function safeClick(){
+            movementAlertBox.className = "safe";
+            movementAlertBox.innerHTML = "✅ Tourist confirmed safe";
+            safetyPrompt.innerHTML = "";
+        }
+
+        function dangerClick(){
+            movementAlertBox.className = "danger";
+            movementAlertBox.innerHTML = "⚠ Tourist is in danger! Help info displayed below";
+            safetyPrompt.innerHTML = `
+                <p>Nearest Police Station: <a href="https://www.google.com/maps/dir/?api=1&destination=28.6125,77.2250" target="_blank">Route</a>, Phone: 100</p>
+                <p>Nearest Hospital: <a href="https://www.google.com/maps/dir/?api=1&destination=28.6150,77.21" target="_blank">Route</a>, Phone: 102</p>
+            `;
+        }
+    </script>
 </body>
 </html>
